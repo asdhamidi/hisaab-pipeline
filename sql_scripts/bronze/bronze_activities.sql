@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS BRONZE.BRONZE_ACTIVITIES;
+
+CREATE TABLE BRONZE.BRONZE_ACTIVITIES (
+    activity VARCHAR(250),
+    activity_created_at VARCHAR(25),
+    date VARCHAR(25),
+    username VARCHAR(25),
+    created_at TIMESTAMP,
+    created_by VARCHAR(25)
+)
