@@ -10,5 +10,7 @@ CREATE TABLE SILVER.SILVER_ENTRIES (
     owed_all BOOLEAN,
     owed_by VARCHAR(100),
     previous_versions VARCHAR(1000),
+    entry_created_at TIMESTAMP,
+    created_at TIMESTAMPTZ,
     created_by VARCHAR(25)
 )

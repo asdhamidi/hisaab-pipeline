@@ -12,6 +12,6 @@ CREATE TABLE BRONZE.BRONZE_ENTRIES (
     previous_versions VARCHAR(2500),
     price VARCHAR(25),
     updated_at VARCHAR(25),
-    created_at TIMESTAMP,
+    created_at TIMESTAMPTZ,
     created_by VARCHAR(25)
 )

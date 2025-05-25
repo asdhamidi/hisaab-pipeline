@@ -3,5 +3,7 @@ DROP TABLE IF EXISTS SILVER.SILVER_USERS;
 CREATE TABLE SILVER.SILVER_USERS (
     username VARCHAR(25),
     admin BOOLEAN,
-    created_at VARCHAR(25)
+    user_created_at TIMESTAMP,
+    created_at TIMESTAMPTZ,
+    created_by VARCHAR(25)
 )

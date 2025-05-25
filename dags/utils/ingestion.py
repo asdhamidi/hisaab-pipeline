@@ -7,16 +7,29 @@ from minio import Minio
 from bson.json_util import dumps
 from pymongo import MongoClient
 from io import BytesIO, StringIO
-from airflow.models import Variable
+from dotenv import load_dotenv
 
+load_dotenv()
 
 def fetch_mongo_data(database_name: str, collection_name: str) -> str:
-    """Fetch data from MongoDB with proper BSON serialization"""
+    """
+    Fetches data from a MongoDB collection and serializes it to a JSON string.
+
+    Args:
+        database_name (str): Name of the MongoDB database.
+        collection_name (str): Name of the collection to fetch data from.
+
+    Returns:
+        str: JSON string of documents (excluding '_id' and 'password' fields).
+
+    Raises:
+        Exception: If connection or fetching fails.
+    """
     logging.info(f"Fetching data for {database_name}/{collection_name}...")
-    MONGODB_URI = Variable.get("MONGODB_URI")
+    MONGODB_URI = os.getenv("MONGODB_URI")
 
     try:
-        # MongoDB connection with timeout
+        # Establish MongoDB connection with timeouts for reliability
         logging.info("Connecting to MongoDB...")
         client = MongoClient(
             MONGODB_URI,
@@ -31,6 +44,8 @@ def fetch_mongo_data(database_name: str, collection_name: str) -> str:
 
         db = client[database_name]
         collection = db[collection_name]
+
+        # Exclude sensitive fields
         results = list(
             collection.find({}, projection={"_id": False, "password": False})
         )
@@ -40,7 +55,7 @@ def fetch_mongo_data(database_name: str, collection_name: str) -> str:
 
         if not data:
             logging.warning(f"No data found in {collection_name}")
-            return []
+            return data
 
         logging.info(
             f"Successfully fetched {len(data)} documents from {collection_name}"
@@ -49,23 +64,35 @@ def fetch_mongo_data(database_name: str, collection_name: str) -> str:
 
     except Exception as e:
         raise Exception(
-            f"Error in fetching from {collection_name} does not exist. :{str(e)}"
+            f"Error in fetch_mongo_data: {str(e)}"
         )
     finally:
         # Ensure connections are closed
         if "client" in locals():
             client.close()
 
+def put_on_bucket(bucket_name: str, object_name: str, data: str) -> bool:
+    """
+    Uploads data to a MinIO bucket as an object.
 
-def put_on_bucket(bucket_name: str, object_name: str, data: list) -> bool:
-    """Upload data to MinIO with enhanced error handling"""
+    Args:
+        bucket_name (str): Name of the MinIO bucket.
+        object_name (str): Name of the object to create in the bucket.
+        data (str): Data to upload (JSON string).
+
+    Returns:
+        bool: True if upload is successful.
+
+    Raises:
+        Exception: If upload fails.
+    """
     logging.info(f"Starting upload to {bucket_name}/{object_name}...")
-    MINIO_ACCESS_KEY = Variable.get("MINIO_ACCESS_KEY")
-    MINIO_SECRET_KEY = Variable.get("MINIO_SECRET_KEY")
-    MINIO_ENDPOINT = Variable.get("MINIO_ENDPOINT", "minio:9000")
+    MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
+    MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
+    MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "minio:9000")
 
     try:
-        # MinIO connection
+        # Connect to MinIO
         logging.info("Connecting to MinIO...")
         minio_client = Minio(
             MINIO_ENDPOINT,
@@ -75,7 +102,7 @@ def put_on_bucket(bucket_name: str, object_name: str, data: list) -> bool:
         )
         logging.info("MinIO connection established")
 
-        # Ensuring landing bucket exists
+        # Ensure bucket exists, create if not
         logging.info(f"Checking if {bucket_name} exists...")
         if not minio_client.bucket_exists(bucket_name):
             logging.info(f"Creating bucket {bucket_name}...")
@@ -83,10 +110,10 @@ def put_on_bucket(bucket_name: str, object_name: str, data: list) -> bool:
         else:
             logging.info(f"{bucket_name} found!")
 
-        # Convert data to BytesIO Object
+        # Convert data to BytesIO for upload
         data_stream = BytesIO(data.encode("utf-8"))
 
-        # Upload with metadata
+        # Upload object to MinIO
         result = minio_client.put_object(
             bucket_name,
             object_name,
@@ -99,36 +126,58 @@ def put_on_bucket(bucket_name: str, object_name: str, data: list) -> bool:
         return True
 
     except Exception as e:
-        raise Exception(f"Upload failed for {object_name}: {str(e)}")
+        raise Exception(f"Error in put_on_bucker. Upload failed for {object_name}: {str(e)}")
 
+def mongo_data_ingestion(collection: str) -> dict:
+    """
+    Orchestrates the ingestion workflow: fetches data from MongoDB and uploads it to MinIO.
 
-def mongo_data_ingestion(collection):
-    """Main ingestion workflow with resource management"""
-    # Configuration
-    BUCKET_NAME = Variable.get("MINIO_LANDING_BUCKET")
-    MONGODB_DATABASE_NAME = Variable.get("MONGO_DB")
+    Args:
+        collection (str): Name of the MongoDB collection.
+
+    Returns:
+        dict: Status dictionary with collection name, status, and document count.
+
+    Raises:
+        Exception: If any step fails.
+    """
+    # Configuration from environment variables
+    BUCKET_NAME = os.getenv("MINIO_LANDING_BUCKET")
+    MONGODB_DATABASE_NAME = os.getenv("MONGO_DB")
 
     try:
         data = fetch_mongo_data(MONGODB_DATABASE_NAME, collection)
         if data:
             put_on_bucket(BUCKET_NAME, f"{collection}.json", data)
-            return {"collection": collection, "status": "success", "count": len(data)}
+            return {"collection": collection, "status": "success", "count": len(json.loads(data))}
         else:
             logging.warning(f"Skipping empty collection: {collection}")
             return {"collection": collection, "status": "skipped", "count": 0}
 
     except Exception as e:
-        raise Exception(f"Failed processing {collection}: {str(e)}")
+        raise Exception(f"Error in mongo_data_ingestion. Failed processing {collection}: {str(e)}")
 
+def extract_minio_data(bucket_name: str, object_name: str) -> list:
+    """
+    Downloads and parses JSON data from a MinIO object.
 
-def extract_minio_data(bucket_name, object_name):
+    Args:
+        bucket_name (str): Name of the MinIO bucket.
+        object_name (str): Name of the object to fetch.
+
+    Returns:
+        list: Parsed JSON data.
+
+    Raises:
+        Exception: If extraction fails.
+    """
     logging.info(f"Extracting data from {bucket_name}/{object_name}...")
-    MINIO_ACCESS_KEY = Variable.get("MINIO_ACCESS_KEY")
-    MINIO_SECRET_KEY = Variable.get("MINIO_SECRET_KEY")
-    MINIO_ENDPOINT = Variable.get("MINIO_ENDPOINT", "minio:9000")
+    MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
+    MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
+    MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "minio:9000")
 
     try:
-        # MinIO connection
+        # Connect to MinIO
         logging.info("Connecting to MinIO...")
         minio_client = Minio(
             MINIO_ENDPOINT,
@@ -150,18 +199,27 @@ def extract_minio_data(bucket_name, object_name):
             )
         logging.info(f"Object {object_name} exists in bucket {bucket_name}.")
 
-        # Get the object data
+        # Download and decode object data
         data = minio_client.get_object(bucket_name, object_name)
         logging.info(f"Data extracted from {bucket_name}/{object_name} successfully.")
         data = json.loads(data.read().decode("utf-8"))
         return data
     except Exception as e:
-        raise Exception(f"extract_minio_data failed: {str(e)}")
+        raise Exception(f"Error in extract_minio_data - Extraction failed for {bucket_name}/{object_name}: {str(e)}")
 
-
-def _generate_insert_query(table_name, data):
+def _generate_insert_query(table_name: str, data: list) -> str:
     """
-    Inserts data into the Bronze layer.
+    Generates a SQL query to truncate and insert data into a Bronze layer table.
+
+    Args:
+        table_name (str): Name of the table (without schema).
+        data (list): List of dictionaries representing records.
+
+    Returns:
+        str: Complete SQL query for truncation and insertion.
+
+    Raises:
+        Exception: If data is empty.
     """
     if not data:
         raise Exception("No data to insert into the Bronze layer.")
@@ -171,14 +229,17 @@ def _generate_insert_query(table_name, data):
     records = []
     for record in data:
         record_data = []
+        # Sort keys for consistent column order
         for key in sorted(record.keys()):
             value = record.get(key, "")
             if not value:
                 value = ""
             value = str(value)
-            value = value.replace("'", "")
+            value = value.replace("'", "")  # Remove single quotes to avoid SQL errors
 
             record_data.append(f"'{value}'")
+
+        # Add metadata columns
         record_data.append("current_timestamp")
         record_data.append("current_user")
         record_data = "(" + ", ".join(record_data) + ")"
@@ -188,15 +249,23 @@ def _generate_insert_query(table_name, data):
     COMPLETE_QUERY = TRUNCATE_QUERY + INSERT_QUERY
     return COMPLETE_QUERY
 
-
-def generate_insert_query(table_name):
+def generate_insert_query(table_name: str) -> str:
     """
-    Ingests data from MinIO to the Bronze layer.
+    Extracts data from MinIO and generates a SQL insert query for the Bronze layer.
+
+    Args:
+        table_name (str): Name of the table (without schema).
+
+    Returns:
+        str: Complete SQL query for truncation and insertion.
     """
-    BUCKET_NAME = Variable.get("MINIO_LANDING_BUCKET")
+    BUCKET_NAME = os.getenv("MINIO_LANDING_BUCKET")
 
-    # Extract data from MinIO
-    minio_data = extract_minio_data(BUCKET_NAME, f"{table_name}.json")
+    try:
+        # Extract data from MinIO
+        minio_data = extract_minio_data(BUCKET_NAME, f"{table_name}.json")
 
-    # Generate insert query to insert data into the Bronze layer
-    return _generate_insert_query(table_name, minio_data)
+        # Generate insert query to insert data into the Bronze layer
+        return _generate_insert_query(table_name, minio_data)
+    except Exception as e:
+        raise Exception(f"Error in generate_insert_query - Failed processing {table_name}: {str(e)}")

@@ -15,5 +15,7 @@ CREATE TABLE SILVER.SILVER_HISAAB_DENORM (
     previous_versions VARCHAR(1000),
     entry_created_by VARCHAR(25), 
     admin BOOLEAN,
-    user_created_at VARCHAR(25)
+    user_created_at VARCHAR(25),
+    created_at TIMESTAMPTZ,
+    created_by VARCHAR(25)
 )

@@ -15,12 +15,18 @@ x-airflow-common: &airflow-common
         AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth"
         AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
         AIRFLOW__WEBSERVER__RBAC: "True"
+        AIRFLOW__WEBSERVER__SECRET_KEY: gP0QXLMuf9N6dlJuqYxZqwRnGxZon54EeKiW-OSOvR8
+        AIRFLOW_CONN_HISAAB_POSTGRES: postgres://airflow:airflow@postgres:5432/hisaab_analytics
+        AIRFLOW_CONN_SPARK_DEFAULT: spark://spark-master:7077
+        JAVA_HOME: "/usr"
     volumes:
         - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
         - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
         - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
         - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
         - ${AIRFLOW_PROJ_DIR:-.}/sql_scripts:/opt/airflow/sql_scripts
+        - ${AIRFLOW_PROJ_DIR:-.}/spark_scripts:/opt/airflow/spark_scripts
+        - ./postgresql-42.7.5.jar:/opt/bitnami/spark/jars/postgresql.jar
     user: "${AIRFLOW_UID:-50000}:0"
     depends_on: &airflow-common-depends-on
         redis:
@@ -42,8 +48,8 @@ services:
             - POSTGRES_PASSWORD=airflow
             - POSTGRES_MULTIPLE_DATABASES=hisaab_analytics
         volumes:
-            - postgres_data:/var/lib/postgresql/data
-            - ./postgres-init/00-create-user.sql:/docker-entrypoint-initdb.d/00-create-user.sql
+            - ./data/postgres:/var/lib/postgresql/data
+            - ./postgres-init/00-create-user.sql:/docker-entrypoint-initd
             - ./postgres-init/01-create-dbs.sql:/docker-entrypoint-initdb.d/01-create-dbs.sql
             - ./postgres-init/02-create-schemas.sql:/docker-entrypoint-initdb.d/02-create-schemas.sql
             - ./sql_scripts:/sql_scripts
@@ -248,9 +254,17 @@ services:
         depends_on:
             - spark-master
         environment:
-            - SPARK_MODE=worker
+            - SPARK_MODE=worker # MUST be worker (not master)
             - SPARK_MASTER_URL=spark://spark-master:7077
-            - SPARK_WORKER_MEMORY=2G
+            - SPARK_WORKER_CORES=4
+            - SPARK_WORKER_MEMORY=6g # Increased from 4g
+            - SPARK_WORKER_OPTS=-Dspark.worker.memoryOverhead=1g
+            - SPARK_WORKER_WEBUI_PORT=8081
+            - SPARK_LOCAL_IP=spark-worker
+        deploy:
+            resources:
+                limits:
+                    memory: 8G
 
     minio:
         image: minio/minio

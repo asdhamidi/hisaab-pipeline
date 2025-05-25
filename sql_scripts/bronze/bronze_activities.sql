@@ -5,6 +5,6 @@ CREATE TABLE BRONZE.BRONZE_ACTIVITIES (
     activity_created_at VARCHAR(25),
     date VARCHAR(25),
     username VARCHAR(25),
-    created_at TIMESTAMP,
+    created_at TIMESTAMPTZ,
     created_by VARCHAR(25)
 )

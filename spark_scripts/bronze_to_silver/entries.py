@@ -9,10 +9,10 @@ def transform_users():
         spark = SparkSession.builder.master("local").getOrCreate()
 
         # Read from bronze.users
-        df_bronze_users = (
+        df_bronze_entries = (
             spark.read.format("jdbc")
             .option("url", "jdbc:postgresql://postgres:5432/hisaab_analytics")
-            .option("dbtable", "bronze.bronze_users")
+            .option("dbtable", "bronze.bronze_entries")
             .option("user", "airflow")
             .option("password", "airflow")
             .option("driver", "org.postgresql.Driver")
@@ -20,7 +20,7 @@ def transform_users():
         )
 
         # Transformations
-        df_silver_users = df_bronze_users.withColumn(
+        df_silver_entries = df_bronze_entries.withColumn(
             "user_created_at", to_timestamp(col("user_created_at"), "d/M/yy h:mm a")
         )
 
@@ -30,7 +30,7 @@ def transform_users():
             "password": "airflow",
             "driver": "org.postgresql.Driver",
         }
-        df_silver_users.write.jdbc(
+        df_silver_entries.write.jdbc(
             url="jdbc:postgresql://postgres:5432/hisaab_analytics",
             table="silver.silver_users",
             mode="overwrite",
@@ -46,6 +46,6 @@ def transform_users():
 
 
 if __name__ == "__main__":
-    logging.info("Starting transformation for BRONZE.BRONZE_USERS")
+    logging.info("Starting transformation for BRONZE.BRONZE_ENTRIES")
     transform_users()
-    logging.info("Transformation completed for BRONZE.BRONZE_USERS")
+    logging.info("Transformation completed for BRONZE.BRONZE_ENTRIES")

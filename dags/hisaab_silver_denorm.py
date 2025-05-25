@@ -11,16 +11,19 @@ with DAG(
     default_args=default_args,
     schedule_interval=None,
     start_date=datetime(2024, 1, 1),
-    tags=["pyspar"],
+    tags=["transformation","pyspark"],
     catchup=False,
 ) as dag:
 
     # Bronze → Silver tasks
     users_silver = SparkSubmitOperator(
-        task_id="users_bronze_to_silver",
-        application="/opt/airflow/pyspark_scripts/bronze_to_silver/users.py",
+        application="/opt/airflow/spark_scripts/bronze_to_silver/users.py",
+        task_id="users_silver",
+        verbose=True,
         conn_id="spark_default",
+        jars="/opt/bitnami/spark/jars/postgresql.jar",
     )
+
 
     # entries_silver = SparkSubmitOperator(
     #     task_id="entries_bronze_to_silver",
