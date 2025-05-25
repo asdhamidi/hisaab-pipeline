@@ -12,6 +12,28 @@ db_properties = {
 
 
 def transform_entries():
+    """
+    Reads entry data from the 'bronze.bronze_entries' table in a PostgreSQL database,
+    applies a series of transformations to clean and standardize the data, and writes
+    the transformed data to the 'silver.silver_entries' table.
+
+    Steps performed:
+    1. Establishes a Spark session.
+    2. Reads the source data from the 'bronze.bronze_entries' table using JDBC.
+    3. Applies the following transformations:
+        - Converts 'entry_created_at' from string to timestamp using the format "h:mm a - d/M/yy".
+        - Converts 'date' from string to date using the format "d/M/yy".
+        - Casts 'price' to DecimalType(5, 2).
+        - Casts 'owed_all' to boolean.
+        - Parses 'updated_at' as timestamp if it matches a datetime pattern; otherwise,
+          appends "12:00 AM" and parses as date with time.
+    4. Writes the transformed DataFrame to the 'silver.silver_entries' table in PostgreSQL,
+       overwriting existing data.
+    5. Handles exceptions and ensures the Spark session is stopped.
+
+    Raises:
+        Exception: If any error occurs during the transformation or writing process.
+    """
     spark = None
     try:
         spark = SparkSession.builder.master("local").getOrCreate()

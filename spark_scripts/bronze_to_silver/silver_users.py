@@ -4,6 +4,26 @@ from pyspark.sql.functions import col, to_timestamp
 
 
 def transform_users():
+    """
+    Extracts user data from the 'bronze.bronze_users' table in a PostgreSQL database,
+    applies necessary transformations, and writes the processed data to the
+    'silver.silver_users' table.
+
+    Workflow:
+        1. Establishes a SparkSession.
+        2. Reads user data from the 'bronze.bronze_users' table using JDBC.
+        3. Transforms the 'user_created_at' column to a timestamp using the format 'd/M/yy h:mm a'.
+        4. Writes the transformed DataFrame to the 'silver.silver_users' table in overwrite mode.
+        5. Handles exceptions and ensures the SparkSession is stopped.
+
+    Raises:
+        Exception: Propagates any exception that occurs during the ETL process.
+
+    Notes:
+        - Assumes the existence of the 'bronze.bronze_users' and 'silver.silver_users' tables.
+        - Requires the PostgreSQL JDBC driver and appropriate user credentials.
+        - Designed for use in a local Spark environment.
+    """
     spark = None
     try:
         spark = SparkSession.builder.master("local").getOrCreate()
