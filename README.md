@@ -54,13 +54,13 @@ Hisaab became a fun yet serious playground for:
 
 ```mermaid
 graph LR
-    A[MongoDB] -->|Daily Export| B(MinIO - Bronze Layer)
+    A[MongoDB] -->|Daily Export| B[MinIO - Bronze Layer]
     B --> C{Airflow DAGs}
     C -->|PySpark Jobs| D[PostgreSQL - Silver Layer]
     D -->|SQL Transformations| E[PostgreSQL - Gold Layer]
-    E --> F[Streamlit Dashboard (Planned)]
-
-    subgraph Dockerized Stack
+    E --> F[Streamlit Dashboard]
+    
+    subgraph Docker Environment
     B
     C
     D
