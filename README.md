@@ -1,11 +1,28 @@
-# 💸 Hisaab Analytics
+# 💸 Hisaab Analytics - WIP
 
 ![Medallion Architecture](<https://img.shields.io/badge/architecture-medallion%20(bronze%2C%20silver%2C%20gold)-blue>)
 ![Dockerized](https://img.shields.io/badge/deployment-dockerized-important)
 ![Airflow](https://img.shields.io/badge/orchestration-airflow-success)
 ![PySpark](https://img.shields.io/badge/processing-pyspark-orange)
 
-A **production-grade, containerized data pipeline** that transforms raw **MongoDB expense data** into actionable insights using modern data engineering principles — built with Airflow, PySpark, MinIO, and PostgreSQL, and structured around the **medallion architecture** (bronze → silver → gold).
+## 🧠 Friendships. Tracked. Transformed. Monetized?
+
+**Hisaab** is what happens when five friends try to split bills... and one of them turns it into a data engineering project.
+
+What started as a expense tracker web app — built to prevent “bro tu kal ka de de” situations — is now a robust pipeline featuring orchestration, transformation, warehouse modeling, observability, and more. Powered by **MongoDB**, **MinIO**, **Airflow**, **PySpark**, and **PostgreSQL**, this system transforms raw chaos into golden insights — all following the **medallion architecture** (bronze → silver → gold).
+
+> Yes, the data is real.
+> No, I’m not selling my friends’ data.
+> But if I was, this README would be the pitch deck.
+
+### Why I Built This
+While everyone builds ecommerce pipelines with fake orders and dummy payments, I wanted something real. Data that’s messy, personal, and weirdly emotional. So I turned to the one source of truth I had — our daily, chaotic expense records.
+Hisaab became a fun yet serious playground for:
+- Practising medallion architecture in PySpark.
+- Building reusable, parameterized Airflow DAGs.
+- Exploring validation logic in Excel output via OpenPyXL.
+- Getting familiar with object storage and APIs (SharePoint, Graph).
+- Visualizing behavioral patterns with Grafana.
 
 ---
 
@@ -57,11 +74,12 @@ graph LR
 
 ```
 .
-├── dags/                      # Airflow DAG definitions
+├── dags/                          # Airflow DAG definitions
 │   ├── 01_mongo_to_minio.py       # Data ingestion pipeline
 │   ├── 02_bronze_processing.py    # Raw data validation & structuring
 │   ├── 03_ddl_deployment.py       # Schema creation in PostgreSQL
-│   └── 04_silver_gold.py          # Core transformations
+│   ├── 04_silver_gold.py          # Core transformations
+│   └── utils/                     # utility function folder
 ├── sql_scripts/
 │   ├── bronze/                    # Mongo-style schemas
 │   ├── silver/                    # Cleaned business entities
@@ -141,11 +159,6 @@ docker-compose up -d
 ```
 
 Wait \~3–5 minutes for all services to initialize:
-
-```bash
-docker-compose logs -f airflow-init
-```
-
 ### 🌐 Service Endpoints
 
 | Service  | URL                                            | Credentials                 |
@@ -170,7 +183,7 @@ docker-compose logs -f airflow-init
 ## 🤝 Contributing
 
 This is a **personal portfolio project** designed to demonstrate real-world data engineering skills.
-Open to feedback, suggestions, and collaboration ideas!
+Open to feedback, suggestions, and collaboration ideas — especially if you're good at settling group expenses 😅
 
 ---
 
