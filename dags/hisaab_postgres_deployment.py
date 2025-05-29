@@ -1,3 +1,36 @@
+"""
+This Airflow DAG automates the deployment of PostgreSQL schemas for the 'bronze', 'silver', and 'gold' data layers using SQL scripts.
+
+Constants:
+    DDL_ROOT (str): Root directory containing SQL scripts organized by data layer.
+
+Functions:
+    get_ddl_files(layer: str) -> list:
+        Reads all `.sql` files from the specified data layer directory under DDL_ROOT.
+        Returns a list of SQL statements as strings, with newline characters removed.
+
+DAG:
+    Name: hisaab_postgres_deployment
+    Description: Deploys PostgreSQL schemas for 'bronze', 'silver', and 'gold' layers by executing corresponding SQL scripts.
+    Schedule: Manual trigger (no schedule interval).
+    Start Date: 2024-01-01
+    Tags: ['postgres']
+    Catchup: Disabled
+
+Tasks:
+    - deploy_bronze_schema: Executes all SQL scripts found in the 'bronze' directory.
+    - deploy_silver_schema: Executes all SQL scripts found in the 'silver' directory.
+    - deploy_gold_schema: Executes all SQL scripts found in the 'gold' directory.
+
+Task Dependencies:
+
+Notes:
+    - Each task uses the PostgresOperator with dynamic task mapping to execute multiple SQL scripts in parallel.
+    - The 'map_index_template' is used to extract a unique identifier from each SQL statement for task mapping.
+    - Ensure that the Airflow connection 'hisaab_postgres' is properly configured.
+    - SQL scripts should be organized in subdirectories under DDL_ROOT named 'bronze', 'silver', and 'gold'.
+"""
+
 import os
 from airflow import DAG
 from datetime import datetime

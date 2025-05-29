@@ -12,22 +12,20 @@ from utils.utils import get_table_for_spark, write_data_to_table
 
 def transform_activities():
     """
-    Reads activity data from the 'bronze.bronze_activities' table in a PostgreSQL database,
-    applies necessary transformations, and writes the processed data to the 'silver.silver_activities' table.
+    Extracts, transforms, and loads activity data from the 'bronze.bronze_activities' table to the 'silver.silver_activities' table.
 
-    Steps performed:
-    1. Establishes a Spark session.
-    2. Reads the raw activities data from the 'bronze.bronze_activities' table using JDBC.
-    3. Transforms the data:
-        - Converts the 'activity_created_at' column from string to timestamp using the format "h:mm a - d/M/yy".
-        - Converts the 'date' column from string to date using the format "d/M/yy".
-    4. Writes the transformed data to the 'silver.silver_activities' table in the same PostgreSQL database,
-       overwriting any existing data in the target table.
-    5. Handles exceptions by printing and re-raising them.
-    6. Ensures the Spark session is stopped after execution.
+    This function performs the following steps:
+        1. Initializes a Spark session.
+        2. Reads raw activity data from the 'bronze.bronze_activities' table.
+        3. Applies transformations:
+            - Converts the 'activity_created_at' column from string to timestamp using the format 'h:mm a - d/M/yy'.
+            - Converts the 'date' column from string to date using the format 'd/M/yy'.
+            - Removes duplicate records.
+        4. Writes the transformed data to the 'silver.silver_activities' table.
+        5. Handles exceptions and ensures the Spark session is properly closed.
 
     Raises:
-        Exception: If any error occurs during the ETL process.
+        Exception: Propagates any exception encountered during the ETL process after logging the error message.
     """
     spark = None
     try:

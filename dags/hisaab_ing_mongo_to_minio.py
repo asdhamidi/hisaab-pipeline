@@ -1,3 +1,22 @@
+"""
+DAG for ingesting data from MongoDB collections to MinIO using Airflow.
+
+This DAG retrieves a list of MongoDB collections from an Airflow Variable, then processes each collection by invoking
+a custom ingestion function. The ingestion logic is encapsulated in the `mongo_data_ingestion` utility.
+
+Tasks:
+    - get_collections: Fetches the list of MongoDB collections to ingest from the Airflow Variable 'MONGO_COLLECTION_LIST'.
+    - process_collection: Ingests data for a single MongoDB collection into MinIO.
+
+Airflow Variables:
+    MONGO_COLLECTION_LIST (str): JSON-encoded list of MongoDB collection names to be ingested.
+
+Raises:
+    Exception: If the 'MONGO_COLLECTION_LIST' Airflow Variable is not set or is empty.
+
+Dependencies:
+    - utils.ingestion.mongo_data_ingestion: Custom ingestion function for MongoDB to MinIO.
+"""
 from airflow import DAG
 from ast import literal_eval
 from datetime import datetime

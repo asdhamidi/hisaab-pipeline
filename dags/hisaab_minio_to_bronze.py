@@ -1,3 +1,18 @@
+"""
+DAG for Ingesting Data from MinIO to Bronze Layer in PostgreSQL
+
+This Airflow DAG orchestrates the ingestion of data from MinIO storage into the bronze layer of a PostgreSQL database. 
+It leverages the `PostgresOperator` to execute dynamically generated SQL insert queries for multiple tables.
+
+Tasks:
+    - insert_data_into_users: Inserts user data into the 'users' table.
+    - insert_data_into_entries: Inserts entry data into the 'entries' table.
+    - insert_data_into_activities: Inserts activity data into the 'activities' table.
+
+Note:
+    Ensure that the Airflow connection 'hisaab_postgres' is properly configured and that the 
+    `generate_insert_query` utility is implemented and accessible in the project.
+"""
 import json
 import logging
 from json import loads

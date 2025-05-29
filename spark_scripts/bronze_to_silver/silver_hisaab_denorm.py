@@ -9,6 +9,30 @@ sys.path.append(str(Path(__file__).parent.parent))
 from utils.utils import get_table_for_spark, write_data_to_table
 
 def create_denormalized():
+    """
+    Creates a denormalized 'silver_hisaab_denorm' table by joining and transforming user, entry, and activity data.
+
+    This function performs the following steps:
+        1. Initializes a Spark session for data processing.
+        2. Loads user, entry, and activity tables from the 'silver' schema, dropping audit columns.
+        3. Constructs three DataFrames:
+            - `updated_entries`: Entries that have been updated, joined with corresponding activities and user details.
+            - `non_updated_entries`: Entries that have not been updated, joined with corresponding activities and user details.
+            - `non_activities_entries`: Entries with dates earlier than the minimum activity date, joined with user details.
+        4. Applies necessary filters and transformations, including:
+            - Matching entries and activities based on timestamps, usernames, and item descriptions.
+            - Filtering for updated or created activities as appropriate.
+            - Adding audit columns (`created_at`, `created_by`) with current timestamp and user.
+        5. Unions the three DataFrames, removes duplicates, and writes the result to the 'silver.silver_hisaab_denorm' table.
+
+    - The denormalized table provides a unified view of user, entry, and activity data for downstream analytics or reporting.
+
+    Raises:
+        Exception: If any of the required tables are missing or if Spark encounters an error during processing.
+
+    Returns:
+        None
+    """
     spark = SparkSession.builder \
         .master("local") \
         .appName("SilverToGold_Denormalized") \
