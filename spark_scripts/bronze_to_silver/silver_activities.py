@@ -2,13 +2,13 @@ import logging
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import DecimalType
+import sys
+from pathlib import Path
 
-db_properties = {
-    "driver": "org.postgresql.Driver",
-    "url": "jdbc:postgresql://postgres:5432/hisaab_analytics",
-    "user": "airflow",
-    "password": "airflow"
-}
+# Add the parent directory to Python's module search path
+sys.path.append(str(Path(__file__).parent.parent))
+
+from utils.utils import get_table_for_spark, write_data_to_table
 
 def transform_activities():
     """
@@ -34,15 +34,8 @@ def transform_activities():
         spark = SparkSession.builder.master("local").getOrCreate()
 
         # Read from bronze.users
-        df_bronze_activities = (
-            spark.read.format("jdbc")
-            .option("url", "jdbc:postgresql://postgres:5432/hisaab_analytics")
-            .option("dbtable", "bronze.bronze_activities")
-            .option("user", "airflow")
-            .option("password", "airflow")
-            .option("driver", "org.postgresql.Driver")
-            .load()
-        )
+        df_bronze_activities = get_table_for_spark(spark, "bronze.bronze_activities")
+
 
         # Transformations
         df_silver_activities = (
@@ -51,19 +44,11 @@ def transform_activities():
                 F.to_timestamp(F.col("activity_created_at"), "h:mm a - d/M/yy"),
             )
             .withColumn("date", F.to_date(F.col("date"), "d/M/yy"))
+            .dropDuplicates()
         )
 
         # Write to silver.users
-        df_silver_activities.write \
-            .format("jdbc") \
-            .option("driver", db_properties["driver"]) \
-            .option("url", db_properties["url"]) \
-            .option("dbtable", "silver.silver_activities") \
-            .option("user", db_properties["user"]) \
-            .option("password", db_properties["password"]) \
-            .option("truncate", "true") \
-            .mode("overwrite") \
-            .save()
+        write_data_to_table(df_silver_activities, "silver.silver_activities")
 
     except Exception as e:
         print(f"Error occurred: {str(e)}")

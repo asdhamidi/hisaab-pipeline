@@ -64,7 +64,6 @@ with DAG(
         conn_id="spark_default",
         jars="/opt/bitnami/spark/jars/postgresql.jar",
         conf=conf,
-
     )
 
     silver_activities = SparkSubmitOperator(
@@ -74,17 +73,18 @@ with DAG(
         conn_id="spark_default",
         jars="/opt/bitnami/spark/jars/postgresql.jar",
         conf=conf,
+    )
+
+    # Denormalized table made by joining above tables
+    silver_hisaab_denorm = SparkSubmitOperator(
+        application="/opt/airflow/spark_scripts/bronze_to_silver/silver_hisaab_denorm.py",
+        task_id="silver_hisaab_denorm",
+        verbose=True,
+        conn_id="spark_default",
+        jars="/opt/bitnami/spark/jars/postgresql.jar",
+        conf=conf,
 
     )
 
-    # # Silver Denorm table task
-    # denormalized_gold = SparkSubmitOperator(
-    #     task_id="create_denormalized",
-    #     application="/opt/airflow/pyspark_scripts/silver_to_gold/denormalized.py",
-    # )
-
     # Dependencies
-    silver_entries
-    silver_users
-    silver_activities
-    # [users_silver, entries_silver, activities_silver] >> denormalized_gold
+    [silver_users, silver_entries, silver_activities] >> silver_hisaab_denorm

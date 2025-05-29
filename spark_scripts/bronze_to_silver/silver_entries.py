@@ -2,6 +2,13 @@ import logging
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import DecimalType
+import sys
+from pathlib import Path
+
+# Add the parent directory to Python's module search path
+sys.path.append(str(Path(__file__).parent.parent))
+
+from utils.utils import get_table_for_spark, write_data_to_table
 
 db_properties = {
     "driver": "org.postgresql.Driver",
@@ -39,19 +46,13 @@ def transform_entries():
         spark = SparkSession.builder.master("local").getOrCreate()
 
         # Read from bronze.users
-        df_bronze_entries = (
-            spark.read.format("jdbc")
-            .option("url", "jdbc:postgresql://postgres:5432/hisaab_analytics")
-            .option("dbtable", "bronze.bronze_entries")
-            .option("user", "airflow")
-            .option("password", "airflow")
-            .option("driver", "org.postgresql.Driver")
-            .load()
-        )
+        df_bronze_entries = get_table_for_spark(spark, "bronze.bronze_entries")
 
         # Transformations
         df_silver_entries = (
-            df_bronze_entries.withColumn(
+            df_bronze_entries
+            .withColumnRenamed("updated_at", "entry_updated_at")
+            .withColumn(
                 "entry_created_at",
                 F.to_timestamp(F.col("entry_created_at"), "h:mm a - d/M/yy"),
             )
@@ -59,15 +60,15 @@ def transform_entries():
             .withColumn("price", F.col("price").cast(DecimalType(5, 2)))
             .withColumn("owed_all", F.col("owed_all").cast("boolean"))
             .withColumn(
-                "updated_at",
+                "entry_updated_at",
                 F.when(
-                    F.col("updated_at").rlike(
+                    F.col("entry_updated_at").rlike(
                         r"\d{1,2}:\d{2} [AP]M - \d{1,2}/\d{1,2}/\d{2}"
                     ),  # datetime pattern
-                    F.to_timestamp("updated_at", "h:mm a - M/d/yy"),
+                    F.to_timestamp("entry_updated_at", "h:mm a - d/M/yy"),
                 ).otherwise(
                     F.to_timestamp(
-                        F.concat("updated_at", F.lit(
+                        F.concat("entry_updated_at", F.lit(
                             " 12:00 AM")), "d/M/yy h:mm a"
                     )  # date-only pattern
                 ),
@@ -75,16 +76,7 @@ def transform_entries():
         )
 
         # Write to silver.users
-        df_silver_entries.write \
-            .format("jdbc") \
-            .option("driver", db_properties["driver"]) \
-            .option("url", db_properties["url"]) \
-            .option("dbtable", "silver.silver_entries") \
-            .option("user", db_properties["user"]) \
-            .option("password", db_properties["password"]) \
-            .option("truncate", "true") \
-            .mode("overwrite") \
-            .save()
+        write_data_to_table(df_silver_entries, "silver.silver_entries")
 
     except Exception as e:
         print(f"Error occurred: {str(e)}")

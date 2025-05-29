@@ -6,7 +6,7 @@ CREATE TABLE SILVER.SILVER_ENTRIES (
     paid_by VARCHAR(25),
     notes VARCHAR(250),
     price NUMERIC(5, 2),
-    updated_at TIMESTAMP,
+    entry_updated_at TIMESTAMP,
     owed_all BOOLEAN,
     owed_by VARCHAR(100),
     previous_versions VARCHAR(2500),

@@ -1,7 +1,13 @@
 import logging
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_timestamp
+from pyspark.sql import functions as F
+import sys
+from pathlib import Path
 
+# Add the parent directory to Python's module search path
+sys.path.append(str(Path(__file__).parent.parent))
+
+from utils.utils import get_table_for_spark, write_data_to_table
 
 def transform_users():
     """
@@ -29,33 +35,20 @@ def transform_users():
         spark = SparkSession.builder.master("local").getOrCreate()
 
         # Read from bronze.users
-        df_bronze_users = (
-            spark.read.format("jdbc")
-            .option("url", "jdbc:postgresql://postgres:5432/hisaab_analytics")
-            .option("dbtable", "bronze.bronze_users")
-            .option("user", "airflow")
-            .option("password", "airflow")
-            .option("driver", "org.postgresql.Driver")
-            .load()
-        )
+        df_bronze_users = get_table_for_spark(spark, "bronze.bronze_users")
 
         # Transformations
         df_silver_users = df_bronze_users.withColumn(
-            "user_created_at", to_timestamp(col("user_created_at"), "d/M/yy h:mm a")
+            "user_created_at", F.to_timestamp(F.col("user_created_at"), "d/M/yy h:mm a")
+        ).withColumn(
+            "admin",
+            F.when(
+                F.col("admin").eqNullSafe(""),
+                F.lit(False)
+            ).otherwise(F.col("admin").cast("boolean"))
         )
 
-        # Write to silver.users
-        properties = {
-            "user": "airflow",
-            "password": "airflow",
-            "driver": "org.postgresql.Driver",
-        }
-        df_silver_users.write.jdbc(
-            url="jdbc:postgresql://postgres:5432/hisaab_analytics",
-            table="silver.silver_users",
-            mode="overwrite",
-            properties=properties,
-        )
+        write_data_to_table(df_silver_users, "silver.silver_users")
 
     except Exception as e:
         print(f"Error occurred: {str(e)}")
