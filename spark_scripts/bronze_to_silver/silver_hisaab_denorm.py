@@ -42,8 +42,8 @@ def create_denormalized():
     silver_users = get_table_for_spark(spark, "silver.silver_users").drop(*drop_cols)
     silver_entries = get_table_for_spark(spark, "silver.silver_entries").drop(*drop_cols)
     silver_activities = get_table_for_spark(spark, "silver.silver_activities").drop(*drop_cols)
+    silver_time_dim = get_table_for_spark(spark, "silver.silver_time_dim")
 
-    # Part 1: Updated entries
     select_cols = [
         "u.username",
         "e.date",
@@ -60,81 +60,91 @@ def create_denormalized():
         "a.activity_created_at",
         "u.admin",
         "u.user_created_at",
+        "t.day_of_month",
+        "t.day_of_week",
+        "t.day_name",
+        "t.day_short_name",
+        "t.is_weekend",
+        "t.week_of_month",
+        "t.week_of_year",
+        "t.month",
+        "t.month_name",
+        "t.month_short_name",
+        "t.quarter",
+        "t.year",
+        "t.year_month",
+        "t.year_quarter",
+        "t.month_third",
+        "t.is_leap_year",
+        "t.day_of_year",
+        "t.first_day_of_month",
+        "t.last_day_of_month",
+        "t.days_in_month",
+        "t.is_first_day_of_month",
+        "t.is_last_day_of_month",
         "created_at",
         "created_by"
     ]
 
+    # Part 1: Updated entries
+    items_activity_match_str = "substring(a.activity, position('for' in a.activity)+4, length(a.activity))"
     updated_entries = silver_entries.alias("e") \
         .join(
             silver_activities.alias("a"),
                 (F.col("e.entry_updated_at") == F.col("a.activity_created_at")) &
                 (F.col("e.paid_by") == F.col("a.username")) &
-                (F.lower(F.trim(F.expr(
-                    "substring(a.activity, position('for' in a.activity)+4, length(a.activity))"
-                ))) == F.lower(F.trim(F.col("e.items")))
+                (F.lower(F.trim(F.expr(items_activity_match_str))) == F.lower(F.trim(F.col("e.items")))
             ),
             "left"
-        ) \
-        .join(
-            silver_users.alias("u"),
-            F.col("u.username") == F.col("e.paid_by"),
-            "left"
-        ) \
+        )\
         .filter(F.col("e.entry_updated_at").isNotNull()) \
         .filter(F.col("a.activity").ilike("%updated%")) \
-        .withColumn("created_at", F.expr("current_timestamp()")) \
-        .withColumn("created_by", F.expr("current_user()")) \
-        .select(*select_cols)
+
 
     non_updated_entries = silver_entries.alias("e") \
         .join(
             silver_activities.alias("a"),
                 (F.col("e.entry_created_at") == F.col("a.activity_created_at")) &
                 (F.col("e.paid_by") == F.col("a.username")) &
-                (F.lower(F.trim(F.expr(
-                    "substring(a.activity, position('for' in a.activity)+4, length(a.activity))"
-                ))) == F.lower(F.trim(F.col("e.items")))
+                (F.lower(F.trim(F.expr(items_activity_match_str))) == F.lower(F.trim(F.col("e.items")))
             ),
             "left"
         ) \
-        .join(
-            silver_users.alias("u"),
-            F.col("u.username") == F.col("e.paid_by"),
-            "left"
-        ) \
+         \
         .filter(F.col("e.entry_updated_at").isNull()) \
-        .filter(F.col("a.activity").ilike("%created%")) \
-        .withColumn("created_at", F.expr("current_timestamp()")) \
-        .withColumn("created_by", F.expr("current_user()")) \
-        .select(*select_cols)
+        .filter(F.col("a.activity").ilike("%created%"))
 
     min_date = silver_activities.agg(F.min("date")).collect()[0][0] or "2024-09-01"
     non_activities_entries = silver_entries.alias("e") \
-            .join(
-                silver_activities.alias("a"),
-                    (F.col("e.entry_created_at") == F.col("a.activity_created_at")) &
-                    (F.col("e.paid_by") == F.col("a.username")) &
-                    (F.lower(F.trim(F.expr(
-                        "substring(a.activity, position('for' in a.activity)+4, length(a.activity))"
-                    ))) == F.lower(F.trim(F.col("e.items")))
-                ),
-                "left"
-            ) \
-            .join(
-                silver_users.alias("u"),
-                F.col("u.username") == F.col("e.paid_by"),
-                "left"
-            ) \
-            .filter(F.col("e.date") < min_date) \
-        .withColumn("created_at", F.expr("current_timestamp()")) \
-        .withColumn("created_by", F.expr("current_user()")) \
-        .select(*select_cols)
+        .join(
+            silver_activities.alias("a"),
+                (F.col("e.entry_created_at") == F.col("a.activity_created_at")) &
+                (F.col("e.paid_by") == F.col("a.username")) &
+                (F.lower(F.trim(F.expr(items_activity_match_str))) == F.lower(F.trim(F.col("e.items")))
+            ),
+            "left"
+        ) \
+        .filter(F.col("e.date") < min_date)
 
     silver_hisaab_denorm = updated_entries \
         .union(non_updated_entries) \
         .union(non_activities_entries)
 
-    silver_hisaab_denorm = silver_hisaab_denorm.distinct()
+    silver_hisaab_denorm = silver_hisaab_denorm \
+        .join(
+            silver_users.alias("u"),
+            F.col("u.username") == F.col("e.paid_by"),
+            "left"
+        ) \
+        .join(
+            silver_time_dim.alias("t"),
+            F.col("t.date") == F.col("e.date"),
+            "left"
+        ) \
+        .withColumn("created_at", F.expr("current_timestamp()")) \
+        .withColumn("created_by", F.expr("current_user()")) \
+        .distinct() \
+        .select(*select_cols)
 
     write_data_to_table(silver_hisaab_denorm, "silver.silver_hisaab_denorm")
 

@@ -29,7 +29,7 @@ def transform_activities():
     """
     spark = None
     try:
-        spark = SparkSession.builder.master("local").getOrCreate()
+        spark = SparkSession.builder.master("local").appName("silver_activities") .getOrCreate()
 
         # Read from bronze.users
         df_bronze_activities = get_table_for_spark(spark, "bronze.bronze_activities")
@@ -57,6 +57,6 @@ def transform_activities():
 
 
 if __name__ == "__main__":
-    logging.info("Starting transformation for BRONZE.BRONZE_ACTIVITIES")
+    logging.info("Starting transformation for SILVER.SILVER_ACTIVITIES")
     transform_activities()
-    logging.info("Transformation completed for BRONZE.BRONZE_ACTIVITIES")
+    logging.info("Transformation completed for SILVER.SILVER_ACTIVITIES")

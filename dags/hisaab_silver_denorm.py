@@ -39,9 +39,17 @@ with DAG(
     default_args=default_args,
     schedule_interval=None,
     start_date=datetime(2024, 1, 1),
-    tags=["transformation", "pyspark"],
+    tags=["silver", "transformation", "pyspark"],
     catchup=False,
 ) as dag:
+    silver_time_dim = SparkSubmitOperator(
+        application="/opt/airflow/spark_scripts/bronze_to_silver/silver_time_dim.py",
+        task_id="silver_time_dim",
+        verbose=True,
+        conn_id="spark_default",
+        jars="/opt/bitnami/spark/jars/postgresql.jar",
+        conf=conf,
+    )
 
     # Bronze → Silver tasks
     silver_users = SparkSubmitOperator(
@@ -82,4 +90,4 @@ with DAG(
     )
 
     # Dependencies
-    [silver_users, silver_entries, silver_activities] >> silver_hisaab_denorm
+    silver_time_dim >> [silver_users, silver_entries, silver_activities] >> silver_hisaab_denorm

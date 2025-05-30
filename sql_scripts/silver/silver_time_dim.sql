@@ -1,21 +1,7 @@
-DROP TABLE IF EXISTS SILVER.SILVER_HISAAB_DENORM;
+DROP TABLE IF EXISTS SILVER.SILVER_TIME_DIM;
 
-CREATE TABLE SILVER.SILVER_HISAAB_DENORM (
-    date DATE,
-    username VARCHAR(25),
-    admin BOOLEAN,
-    items VARCHAR(250),
-    price NUMERIC(10, 2),
-    paid_by VARCHAR(25),
-    owed_all BOOLEAN,
-    owed_by VARCHAR(100),
-    activity VARCHAR(250),
-    notes VARCHAR(250),
-    previous_versions VARCHAR(2500),
-    entry_updated_at VARCHAR(25),
-    entry_created_at VARCHAR(25),
-    activity_created_at VARCHAR(25),
-    user_created_at VARCHAR(25),
+CREATE TABLE SILVER.SILVER_TIME_DIM (
+    date DATE NOT NULL,
     day_of_month INTEGER,
     day_of_week INTEGER,
     day_name VARCHAR(9),
@@ -39,7 +25,8 @@ CREATE TABLE SILVER.SILVER_HISAAB_DENORM (
     is_first_day_of_month BOOLEAN,
     is_last_day_of_month BOOLEAN,
     fiscal_year INTEGER,
-    fiscal_quarter INTEGER,
-    created_at TIMESTAMPTZ,
-    created_by VARCHAR(25)
-)
+    fiscal_quarter INTEGER
+);
+
+-- Create index on date column for better join performance
+CREATE INDEX idx_time_dimension_date ON SILVER.SILVER_TIME_DIM (date);

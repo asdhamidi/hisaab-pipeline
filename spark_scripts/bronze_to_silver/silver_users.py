@@ -32,7 +32,7 @@ def transform_users():
     """
     spark = None
     try:
-        spark = SparkSession.builder.master("local").getOrCreate()
+        spark = SparkSession.builder.master("local").appName("silver_users") .getOrCreate()
 
         # Read from bronze.users
         df_bronze_users = get_table_for_spark(spark, "bronze.bronze_users")
@@ -59,6 +59,6 @@ def transform_users():
 
 
 if __name__ == "__main__":
-    logging.info("Starting transformation for BRONZE.BRONZE_USERS")
+    logging.info("Starting transformation for SILVER.SILVER_USERS")
     transform_users()
-    logging.info("Transformation completed for BRONZE.BRONZE_USERS")
+    logging.info("Transformation completed for SILVER.SILVER_USERS")

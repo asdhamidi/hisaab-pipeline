@@ -43,7 +43,7 @@ def transform_entries():
     """
     spark = None
     try:
-        spark = SparkSession.builder.master("local").getOrCreate()
+        spark = SparkSession.builder.master("local").appName("silver_entries") .getOrCreate()
 
         # Read from bronze.users
         df_bronze_entries = get_table_for_spark(spark, "bronze.bronze_entries")
@@ -57,7 +57,7 @@ def transform_entries():
                 F.to_timestamp(F.col("entry_created_at"), "h:mm a - d/M/yy"),
             )
             .withColumn("date", F.to_date(F.col("date"), "d/M/yy"))
-            .withColumn("price", F.col("price").cast(DecimalType(5, 2)))
+            .withColumn("price", F.col("price").cast(DecimalType(10, 2)))
             .withColumn("owed_all", F.col("owed_all").cast("boolean"))
             .withColumn(
                 "entry_updated_at",
@@ -87,6 +87,6 @@ def transform_entries():
 
 
 if __name__ == "__main__":
-    logging.info("Starting transformation for BRONZE.BRONZE_ENTRIES")
+    logging.info("Starting transformation for SILVER.SILVER_ENTRIES")
     transform_entries()
-    logging.info("Transformation completed for BRONZE.BRONZE_ENTRIES")
+    logging.info("Transformation completed for SILVER.SILVER_ENTRIES")
