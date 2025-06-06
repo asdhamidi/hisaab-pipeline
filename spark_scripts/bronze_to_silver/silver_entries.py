@@ -58,7 +58,10 @@ def transform_entries():
             )
             .withColumn("date", F.to_date(F.col("date"), "d/M/yy"))
             .withColumn("price", F.col("price").cast(DecimalType(10, 2)))
-            .withColumn("owed_all", F.col("owed_all").cast("boolean"))
+            .withColumn(
+                "owed_all",
+                F.when(F.col("owed_all").isNull(), F.lit(False)).otherwise(F.col("owed_all").cast("boolean"))
+            )
             .withColumn(
                 "entry_updated_at",
                 F.when(

@@ -4,11 +4,12 @@
 **DAG Name**: `financial_trends_analysis`  
 **Execution Order**: Runs daily after data ingestion
 
-| # | Question | Table Name | Columns | Description |
-|---|----------|------------|---------|-------------|
-| 1 | Monthly spending per user | `gold.user_monthly_spending` | `user_id, month, total_spent, entry_count` | Tracks spending habits over time |
-| 4 | User entry frequency | `gold.user_entry_frequency` | `user_id, month, entry_count, avg_price` | Measures user engagement via entries |
-| 11 | Expense statistics | `gold.expense_stats` | `expense_type, avg_amount, max_amount, avg_users_involved` | Analyzes expense patterns |
+|Question | Table Name | Columns | Description |
+|----------|------------|---------|-------------|
+|Monthly spending per user | `gold.gold_spending_per_user_monthly` | `username, year_month, total_spending` | Tracks spending habits over time |
+|User entry frequency | `gold.user_entry_frequency` | `user_id, month, entry_count, avg_price` | Measures user engagement via entries |
+| Expense statistics | `gold.expense_stats` | `expense_type, avg_amount, max_amount, avg_users_involved` | Analyzes expense patterns |
+| Expense Share | `gold.gold_user_monthly_share` | `username, year_month, user_monthly_spending, monthly_total_combined, user_monthly_share`  | Analyzes expense patterns |
 
 **PySpark Execution**:
 1. `monthly_spending.py` → `user_entry_frequency.py` → `expense_stats.py`

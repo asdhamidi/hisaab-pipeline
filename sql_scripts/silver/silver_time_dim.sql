@@ -1,32 +1,32 @@
 DROP TABLE IF EXISTS SILVER.SILVER_TIME_DIM;
 
 CREATE TABLE SILVER.SILVER_TIME_DIM (
-    date DATE NOT NULL,
-    day_of_month INTEGER,
-    day_of_week INTEGER,
-    day_name VARCHAR(9),
-    day_short_name VARCHAR(3),
-    is_weekend BOOLEAN,
-    week_of_month INTEGER,
-    week_of_year INTEGER,
-    month INTEGER,
-    month_name VARCHAR(9),
-    month_short_name VARCHAR(3),
-    quarter INTEGER,
-    year INTEGER,
-    year_month VARCHAR(7),
-    year_quarter VARCHAR(7),
-    month_third VARCHAR(6),
-    is_leap_year BOOLEAN,
-    day_of_year INTEGER,
-    first_day_of_month DATE,
-    last_day_of_month DATE,
-    days_in_month INTEGER,
-    is_first_day_of_month BOOLEAN,
-    is_last_day_of_month BOOLEAN,
-    fiscal_year INTEGER,
-    fiscal_quarter INTEGER
+	DATE DATE NOT NULL,
+	DAY_OF_MONTH INTEGER,
+	DAY_OF_WEEK INTEGER,
+	DAY_NAME VARCHAR(9),
+	DAY_SHORT_NAME VARCHAR(3),
+	IS_WEEKEND BOOLEAN,
+	WEEK_OF_MONTH INTEGER,
+	WEEK_OF_YEAR INTEGER,
+	MONTH INTEGER,
+	MONTH_NAME VARCHAR(9),
+	MONTH_SHORT_NAME VARCHAR(3),
+	QUARTER INTEGER,
+	YEAR INTEGER,
+	YEAR_MONTH VARCHAR(7),
+	YEAR_QUARTER VARCHAR(7),
+	MONTH_THIRD VARCHAR(6),
+	IS_LEAP_YEAR BOOLEAN,
+	DAY_OF_YEAR INTEGER,
+	FIRST_DAY_OF_MONTH DATE,
+	LAST_DAY_OF_MONTH DATE,
+	DAYS_IN_MONTH INTEGER,
+	IS_FIRST_DAY_OF_MONTH BOOLEAN,
+	IS_LAST_DAY_OF_MONTH BOOLEAN,
+	FISCAL_YEAR INTEGER,
+	FISCAL_QUARTER INTEGER
 );
 
 -- Create index on date column for better join performance
-CREATE INDEX idx_time_dimension_date ON SILVER.SILVER_TIME_DIM (date);
+CREATE INDEX IDX_TIME_DIMENSION_DATE ON SILVER.SILVER_TIME_DIM (DATE);
