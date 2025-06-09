@@ -1,7 +1,7 @@
 # Expense Analytics Pipelines
 
 ## 1️⃣ Financial Trends Pipeline
-**DAG Name**: `financial_trends_analysis`  
+**DAG Name**: `financial_trends_analysis`
 **Execution Order**: Runs daily after data ingestion
 
 |Question | Table Name | Columns | Description |
@@ -16,23 +16,23 @@
 
 ---
 
-## 2️⃣ Debt Reconciliation Pipeline  
-**DAG Name**: `debt_analysis`  
+## 2️⃣ Debt Reconciliation Pipeline
+**DAG Name**: `debt_analysis`
 **Execution Order**: Runs after financial trends
 
-| # | Question | Table Name | Columns | Description |
-|---|----------|------------|---------|-------------|
-| 2 | Who owes whom | `gold.debt_ledger` | `debtor, creditor, amount, last_updated` | Complete debt network |
-| 5 | User debt positions | `gold.user_net_balances` | `user_id, net_balance, is_creditor` | Shows who's overall in credit/debt |
-| 12 | Payer frequency | `gold.payer_analysis` | `user_id, payment_count, total_paid` | Identifies frequent payers |
+| Question | Table Name | Columns | Description |
+|----------|------------|---------|-------------|
+| Who owes whom | `gold.debt_ledger` | `debtor, creditor, amount, last_updated` | Complete debt network |
+| User debt positions | `gold.user_net_balances` | `user_id, net_balance, is_creditor` | Shows who's overall in credit/debt |
+| Payer frequency | `gold.payer_analysis` | `user_id, payment_count, total_paid` | Identifies frequent payers |
 
-**PySpark Execution**:  
+**PySpark Execution**:
 1. `debt_calculation.py` → `net_balances.py` → `payer_frequency.py`
 
 ---
 
-## 3️⃣ Behavioral Analytics Pipeline  
-**DAG Name**: `user_behavior_analysis`  
+## 3️⃣ Behavioral Analytics Pipeline
+**DAG Name**: `user_behavior_analysis`
 **Execution Order**: Runs in parallel with financial trends
 
 | # | Question | Table Name | Columns | Description |
@@ -41,13 +41,13 @@
 | 7 | User engagement (MAU/WAU) | `gold.user_engagement` | `user_id, week, month, active_days` | Tracks user participation |
 | 9 | Modification patterns | `gold.modification_analysis` | `user_id, edit_count, delete_count` | Shows edit/delete behavior |
 
-**PySpark Execution**:  
+**PySpark Execution**:
 1. `activity_peaks.py` → `engagement_metrics.py` → `modification_patterns.py`
 
 ---
 
-## 4️⃣ Expense Patterns Pipeline  
-**DAG Name**: `expense_patterns_analysis`  
+## 4️⃣ Expense Patterns Pipeline
+**DAG Name**: `expense_patterns_analysis`
 **Execution Order**: Runs after data validation
 
 | # | Question | Table Name | Columns | Description |
@@ -56,13 +56,13 @@
 | 10 | Split behavior | `gold.split_analysis` | `split_type, count, avg_users` | Analyzes expense sharing patterns |
 | 13 | Expense categories | `gold.expense_categories` | `category, subcategory, avg_price` | Auto-categorizes expenses |
 
-**PySpark Execution**:  
+**PySpark Execution**:
 1. `item_frequency.py` → `split_behavior.py` → `category_classification.py`
 
 ---
 
-## 5️⃣ Data Quality Pipeline  
-**DAG Name**: `data_validation`  
+## 5️⃣ Data Quality Pipeline
+**DAG Name**: `data_validation`
 **Execution Order**: Runs first before other pipelines
 
 | # | Question | Table Name | Columns | Description |
@@ -71,7 +71,7 @@
 | 14 | Logging delays | `gold.logging_delays` | `user_id, avg_delay_hours, max_delay` | Tracks entry timeliness |
 | 15 | Group expense ratio | `gold.group_expense_metrics` | `month, pct_group_expenses` | Measures shared expense frequency |
 
-**PySpark Execution**:  
+**PySpark Execution**:
 1. `reference_validation.py` → `delay_analysis.py` → `group_expense_ratio.py`
 
 ---

@@ -4,11 +4,11 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 # Add the parent directory to Python's module search path
-from itertools import groupby
 
 sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.utils import get_table_for_spark, write_data_to_table
+
 
 def expense_stats():
     spark = None
@@ -22,24 +22,21 @@ def expense_stats():
 
         df_with_expense_type = df_src.withColumn(
             "expense_type",
-            F.when(F.col("owed_all"), F.lit("all-shared"))
+            F.when(
+                F.col("owed_all"),
+                F.lit("all-shared")
+            )
             .when(
                 (
                     F.size(
                         F.split(F.regexp_replace(F.col("owed_by"), r"^\[|\]$", ""), ",")
-                    )
-                    == 1
+                    ) == 1
                 )
-                |
-                (
-                    F.size(
-                        F.split(
-                            F.regexp_replace(F.col("owed_by"), r"^\[|\]$", ""), ","
-                        )
-                    )
-                    == 2
-                    &
-                    F.array_contains(
+                | (
+                    (F.size(
+                        F.split(F.regexp_replace(F.col("owed_by"), r"^\[|\]$", ""), ",")
+                    ) == 2)
+                    & F.array_contains(
                         F.split(
                             F.regexp_replace(F.col("owed_by"), r"^\[|\]$", ""), ","
                         ),
@@ -50,6 +47,7 @@ def expense_stats():
             )
             .otherwise(F.lit("semi-shared")),
         )
+
 
         df_agg = (
             df_with_expense_type.groupby("expense_type", "year_month")
