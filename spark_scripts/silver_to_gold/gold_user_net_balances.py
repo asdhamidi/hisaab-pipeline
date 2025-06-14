@@ -3,9 +3,6 @@ from pathlib import Path
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
-# Add the parent directory to Python's module search path
-from itertools import groupby
-
 sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.utils import get_table_for_spark, write_data_to_table

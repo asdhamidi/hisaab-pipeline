@@ -20,14 +20,14 @@ with DAG(
     tags=["gold", "transformation", "pyspark", "debt"],
     catchup=False,
 ) as dag:
-    # gold_debt_ledger = SparkSubmitOperator(
-    #     application="/opt/airflow/spark_scripts/silver_to_gold/gold_debt_ledger.py",
-    #     task_id="gold_debt_ledger",
-    #     verbose=True,
-    #     conn_id="spark_default",
-    #     jars="/opt/bitnami/spark/jars/postgresql.jar",
-    #     conf=conf,
-    # )
+    gold_debt_ledger = SparkSubmitOperator(
+        application="/opt/airflow/spark_scripts/silver_to_gold/gold_debt_ledger.py",
+        task_id="gold_debt_ledger",
+        verbose=True,
+        conn_id="spark_default",
+        jars="/opt/bitnami/spark/jars/postgresql.jar",
+        conf=conf,
+    )
 
     gold_user_net_balances = SparkSubmitOperator(
         application="/opt/airflow/spark_scripts/silver_to_gold/gold_user_net_balances.py",
@@ -38,6 +38,14 @@ with DAG(
         conf=conf,
     )
 
+    gold_user_trends = SparkSubmitOperator(
+        application="/opt/airflow/spark_scripts/silver_to_gold/gold_user_trends.py",
+        task_id="gold_user_trends",
+        verbose=True,
+        conn_id="spark_default",
+        jars="/opt/bitnami/spark/jars/postgresql.jar",
+        conf=conf,
+    )
+
     # Dependencies
-    # gold_debt_ledger
-    gold_user_net_balances
+gold_debt_ledger >> gold_user_net_balances >> gold_user_trends

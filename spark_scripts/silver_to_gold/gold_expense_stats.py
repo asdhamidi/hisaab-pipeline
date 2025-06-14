@@ -55,6 +55,7 @@ def expense_stats():
                 F.min("price").alias("min_amount"),
                 F.avg("price").alias("avg_amount"),
                 F.max("price").alias("max_amount"),
+                F.sum("price").alias("total_amount"),
                 F.count("*").alias("no_of_entries"),
             )
             .withColumn("created_at", F.current_timestamp())
