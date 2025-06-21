@@ -35,11 +35,11 @@
 **DAG Name**: `user_behavior_analysis`
 **Execution Order**: Runs in parallel with financial trends
 
-| # | Question | Table Name | Columns | Description |
-|---|----------|------------|---------|-------------|
-| 6 | Peak activity days | `gold.activity_peaks` | `date, activity_count, unique_users` | Identifies busiest days |
-| 7 | User engagement (MAU/WAU) | `gold.user_engagement` | `username, week, month, active_days` | Tracks user participation |
-| 9 | Modification patterns | `gold.modification_analysis` | `username, edit_count, delete_count` | Shows edit/delete behavior |
+| Question | Table Name | Columns | Description |
+|----------|------------|---------|-------------|
+| Peak activity days | `gold.activity_peaks` | `date, activity_count, unique_users` | Identifies busiest days |
+| User engagement (MAU/WAU) | `gold.user_engagement` | `username, week, month, year, active_days, activity_count, visit_count, modification_count, create_count` | Tracks user participation |
+| Modification patterns | `gold.modification_analysis` | `username, edit_count, delete_count` | Shows edit/delete behavior |
 
 **PySpark Execution**:
 1. `activity_peaks.py` → `engagement_metrics.py` → `modification_patterns.py`

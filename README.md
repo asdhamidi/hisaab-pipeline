@@ -9,20 +9,21 @@
 
 **Hisaab** is what happens when five friends try to split bills... and one of them turns it into a data engineering project.
 
-What started as a expense tracker web app — built to prevent “bro tu kal ka de de” situations — is now a robust pipeline featuring orchestration, transformation, warehouse modeling, observability, and more. Powered by **MongoDB**, **MinIO**, **Airflow**, **PySpark**, and **PostgreSQL**, this system transforms raw chaos into golden insights — all following the **medallion architecture** (bronze → silver → gold).
+What started as a expense tracker web app — built to prevent “bro tu kal ka de de” situations — is now a robust pipeline featuring orchestration, transformation, warehouse modeling, observability, and more. Powered by **MongoDB**, **MinIO**, **Airflow**, **PySpark**, **PostgreSQL**, and **Apache Superset** this system transforms raw chaos into golden insights — all following the **medallion architecture** (bronze → silver → gold).
 
 > Yes, the data is real.
 > No, I’m not selling my friends’ data.
 > But if I was, this README would be the pitch deck.
 
 ### Why I Built This
-While everyone builds ecommerce pipelines with fake orders and dummy payments, I wanted something real. Data that’s messy, personal, and weirdly emotional. So I turned to the one source of truth I had — our daily, chaotic expense records.
+While everyone builds e-commerce pipelines with fake orders and dummy payments, I wanted something real. Data that’s messy, personal, and weirdly emotional. So I turned to the one source of truth I had — our daily, chaotic expense records.
 Hisaab became a fun yet serious playground for:
+- Learning & getting hands dirty with Docker.
 - Practising medallion architecture in PySpark.
-- Building reusable, parameterized Airflow DAGs.
-- Exploring validation logic in Excel output via OpenPyXL.
-- Getting familiar with object storage and APIs (SharePoint, Graph).
-- Visualizing behavioral patterns with Grafana.
+- Trying out databases other than Snowflake.
+- Building reusable and parameterized Airflow DAGs.
+- Getting some elbow grease with MinIO.
+- Visualizing behavioral patterns with Apache Superset.
 
 ---
 
@@ -46,7 +47,7 @@ Hisaab became a fun yet serious playground for:
 | **Database**      | PostgreSQL 13                       | Silver & gold model storage         |
 | **Admin UI**      | pgAdmin                             | PostgreSQL GUI client               |
 | **Deployment**    | Docker Compose                      | Containerized, isolated environment |
-| **Dashboards**    | Streamlit / Grafana _(coming soon)_ | Visual analytics and insights       |
+| **Dashboards**    | Apache Superset                     | Visual analytics and insights       |
 
 ---
 
@@ -58,8 +59,8 @@ graph LR
     B --> C{Airflow DAGs}
     C -->|PySpark Jobs| D[PostgreSQL - Silver Layer]
     D -->|SQL Transformations| E[PostgreSQL - Gold Layer]
-    E --> F[Streamlit Dashboard]
-    
+    E --> F[Apache Superset]
+
     subgraph Docker Environment
     B
     C
@@ -172,11 +173,12 @@ Wait \~3–5 minutes for all services to initialize:
 
 ## 🛤️ Roadmap
 
-- [ ] Build Streamlit dashboard for gold-layer insights
+- [ ] Build Apache Superset dashboard for gold-layer insights
 - [ ] Add PySpark unit tests (via `pytest`)
 - [ ] Integrate Great Expectations or custom DQ alerts
 - [ ] Automate CI/CD pipeline (GitHub Actions)
 - [ ] Publish data dictionary & schema documentation
+- [ ] Deploy this entire thing to the cloud
 
 ---
 
