@@ -173,10 +173,8 @@ Wait \~3–5 minutes for all services to initialize:
 
 ## 🛤️ Roadmap
 
-- [ ] Build Apache Superset dashboard for gold-layer insights
-- [ ] Add PySpark unit tests (via `pytest`)
+- [X] Build Apache Superset dashboard for gold-layer insights
 - [ ] Integrate Great Expectations or custom DQ alerts
-- [ ] Automate CI/CD pipeline (GitHub Actions)
 - [ ] Publish data dictionary & schema documentation
 - [ ] Deploy this entire thing to the cloud
 
