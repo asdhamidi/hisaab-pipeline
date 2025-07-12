@@ -1,4 +1,4 @@
-# 💸 Hisaab Analytics - WIP
+# 💸 Hisaab Analytics
 
 ![Medallion Architecture](<https://img.shields.io/badge/architecture-medallion%20(bronze%2C%20silver%2C%20gold)-blue>)
 ![Dockerized](https://img.shields.io/badge/deployment-dockerized-important)
@@ -176,7 +176,7 @@ Wait \~3–5 minutes for all services to initialize:
 - [X] Build Apache Superset dashboard for gold-layer insights
 - [X] Integrate custom DQ
 - [ ] Publish data dictionary & schema documentation
-- [ ] Deploy this entire thing to the cloud
+- [ ] Deploy this entire thing to the cloud (Not gonna do this at the moment.)
 
 ---
 
