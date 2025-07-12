@@ -269,6 +269,17 @@ services:
     depends_on:
       - postgres
 
+  superset:
+    image: apache/superset
+    environment:
+      - SUPERSET_SECRET_KEY=your_secret_key
+    ports:
+      - "8088:8088"
+    depends_on:
+      - postgres
+    volumes:
+      - ./data/superset:/app/superset_home
+
 volumes:
   postgres_data:
   mongodb_data:

@@ -8,11 +8,10 @@
 |----------|------------|---------|-------------|
 |Monthly spending per user | `gold.gold_spending_per_user_monthly` | `username, year_month, total_spending` | Tracks spending habits over time |
 |User entry frequency | `gold.user_entry_frequency` | `username, month, entry_count, avg_price` | Measures user engagement via entries |
-| Expense statistics | `gold.expense_stats` | `expense_type, avg_amount, max_amount, avg_users_involved` | Analyzes expense patterns |
 | Expense Share | `gold.gold_user_monthly_share` | `username, year_month, user_monthly_spending, monthly_total_combined, user_monthly_share`  | Analyzes expense patterns |
 
 **PySpark Execution**:
-1. `monthly_spending.py` → `user_entry_frequency.py` → `expense_stats.py`
+1. `monthly_spending.py` → `user_entry_frequency.py` → `user_monthly_share.py`
 
 ---
 
@@ -37,42 +36,27 @@
 
 | Question | Table Name | Columns | Description |
 |----------|------------|---------|-------------|
-| Peak activity days | `gold.activity_peaks` | `date, activity_count, unique_users` | Identifies busiest days |
-| User engagement (MAU/WAU) | `gold.user_engagement` | `username, week, month, year, active_days, activity_count, visit_count, modification_count, create_count` | Tracks user participation |
-| Modification patterns | `gold.modification_analysis` | `username, edit_count, delete_count` | Shows edit/delete behavior |
+| Peak activity days | `gold.gold_activity_peaks` | `date, activity_count, unique_users` | Identifies busiest days |
+| User engagement | `gold.gold_user_engagement` | `username, week, month, year, active_days, activity_count, visit_count, modification_count, create_count` | Tracks user participation |
+| User activities on daily basis | `gold.gold_user_activities` | `username, is_weekend, time_of_the_day edit_count, activity_count, visit_count, modification_count, create_count, modification_ratio` | Magnifies user's activities across the day |
 
 **PySpark Execution**:
-1. `activity_peaks.py` → `engagement_metrics.py` → `modification_patterns.py`
+1. `activity_peaks.py` → `user_engagement.py` → `user_activities.py`
 
 ---
 
 ## 4️⃣ Expense Patterns Pipeline
 **DAG Name**: `expense_patterns_analysis`
-**Execution Order**: Runs after data validation
+**Execution Order**: Runs after Behavioral Analytics
 
-| # | Question | Table Name | Columns | Description |
-|---|----------|------------|---------|-------------|
-| 3 | Frequent items | `gold.top_items` | `item_name, frequency, total_spent` | Most logged expenses |
-| 10 | Split behavior | `gold.split_analysis` | `split_type, count, avg_users` | Analyzes expense sharing patterns |
-| 13 | Expense categories | `gold.expense_categories` | `category, subcategory, avg_price` | Auto-categorizes expenses |
+| Question | Table Name | Columns | Description |
+|----------|------------|---------|-------------|
+| Frequent items | `gold.top_items` | `item_name, frequency, total_spent` | Most logged expenses |
+| Expense categories | `gold.expense_categories` | `category, subcategory, avg_price` | Auto-categorizes expenses |
+| Expense statistics | `gold.expense_stats` | `expense_type, avg_amount, max_amount, avg_users_involved` | Analyzes expense patterns on sharing type |
 
 **PySpark Execution**:
 1. `item_frequency.py` → `split_behavior.py` → `category_classification.py`
-
----
-
-## 5️⃣ Data Quality Pipeline
-**DAG Name**: `data_validation`
-**Execution Order**: Runs first before other pipelines
-
-| # | Question | Table Name | Columns | Description |
-|---|----------|------------|---------|-------------|
-| 8 | Invalid references | `gold.invalid_references` | `reference_type, invalid_count, sample_ids` | Data integrity checks |
-| 14 | Logging delays | `gold.logging_delays` | `username, avg_delay_hours, max_delay` | Tracks entry timeliness |
-| 15 | Group expense ratio | `gold.group_expense_metrics` | `month, pct_group_expenses` | Measures shared expense frequency |
-
-**PySpark Execution**:
-1. `reference_validation.py` → `delay_analysis.py` → `group_expense_ratio.py`
 
 ---
 
