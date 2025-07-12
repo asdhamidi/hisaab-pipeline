@@ -12,16 +12,15 @@ def insert_dq_results(hook: PostgresHook, dq_results: List[Dict[str, Any]]) -> N
     insert_query = """
         INSERT INTO admin.admin_dq_results
         (id, result, execution_date, comments)
-        VALUES (%s, %s, %s, %s)
+        VALUES
     """
+    for r in dq_results:
+        insert_query += f"({r['id']}, '{r['result']}', '{r['execution_date']}', '{r['comments']}'),\n"
 
-    records = [
-        (r['id'], r['result'], r['execution_date'], r['comments'])
-        for r in dq_results
-    ]
+    insert_query = insert_query.rstrip(",\n") + ";"
 
     try:
-        hook.run(insert_query, parameters=records)
+        hook.run(insert_query)
     except Exception as e:
         raise AirflowException(f"Failed to insert DQ results: {str(e)}")
 
@@ -30,17 +29,17 @@ def run_dq_checks(table_schema: str, table_name: str) -> None:
     Executes all DQ checks defined for a specific table
     Returns list of results ready for insertion into ADMIN_DQ_RESULTS
     """
-    pg_hook = PostgresHook(postgres_conn_id='your_postgres_conn_id')
+    logging.info(f"Executing DQ checks for table {table_schema}.{table_name}")
+    pg_hook = PostgresHook(postgres_conn_id='hisaab_postgres')
     execution_date = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f%z")[:-2]
     results = []
 
     # Retrieve configured checks for this table
     retrieval_query = f"""
-        SELECT id, type, target_column, range_check, lower_range, upper_range,
-               is_null_check, is_unique_check, is_duplicate_check
+        SELECT id, type, target_column, range_check, lower_range, upper_range
         FROM admin.admin_dq_checks
-        WHERE target_schema = '{table_schema}'
-          AND target_table = '{table_name}'
+        WHERE target_schema = '{table_schema.upper()}'
+          AND target_table = '{table_name.upper()}'
           AND active = true
     """
 
@@ -49,7 +48,7 @@ def run_dq_checks(table_schema: str, table_name: str) -> None:
         failed_flag = 0
 
         for check in checks:
-            check_id, check_type, column, range_check, lower, upper, null_check, unique_check, dup_check = check
+            check_id, check_type, column, range_check, lower, upper = check
 
             if range_check:
                 result = _execute_range_check(pg_hook, table_schema, table_name, column, lower, upper)
@@ -116,9 +115,9 @@ def _execute_duplicate_check(hook: PostgresHook, schema: str, table: str, column
     query = f"""
         SELECT COUNT(*)
         FROM (
-            SELECT {', '.join(column)}, COUNT(*)
+            SELECT {column}, COUNT(*)
             FROM {schema}.{table}
-            GROUP BY {', '.join(column)}
+            GROUP BY {column}
             HAVING COUNT(*) > 1
         ) AS duplicates
     """

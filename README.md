@@ -174,7 +174,7 @@ Wait \~3–5 minutes for all services to initialize:
 ## 🛤️ Roadmap
 
 - [X] Build Apache Superset dashboard for gold-layer insights
-- [ ] Integrate Great Expectations or custom DQ alerts
+- [X] Integrate custom DQ
 - [ ] Publish data dictionary & schema documentation
 - [ ] Deploy this entire thing to the cloud
 

@@ -23,8 +23,10 @@ Dependencies:
 """
 
 from airflow import DAG
-from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 from datetime import datetime
+from utils.dq import run_dq_checks
+from airflow.operators.python import PythonOperator
+from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 
 default_args = {
     "owner": "airflow",
@@ -61,6 +63,15 @@ with DAG(
         conf=conf,
     )
 
+    silver_users_dq = PythonOperator(
+        task_id="silver_users_dq",
+        python_callable=run_dq_checks,
+        op_kwargs={
+            "table_schema": "silver",
+            "table_name": "silver_users"
+        },
+    )
+
     silver_entries = SparkSubmitOperator(
         application="/opt/airflow/spark_scripts/bronze_to_silver/silver_entries.py",
         task_id="silver_entries",
@@ -70,6 +81,15 @@ with DAG(
         conf=conf,
     )
 
+    silver_entries_dq = PythonOperator(
+        task_id="silver_entries_dq",
+        python_callable=run_dq_checks,
+        op_kwargs={
+            "table_schema": "silver",
+            "table_name": "silver_entries"
+        },
+    )
+
     silver_activities = SparkSubmitOperator(
         application="/opt/airflow/spark_scripts/bronze_to_silver/silver_activities.py",
         task_id="silver_activities",
@@ -77,6 +97,15 @@ with DAG(
         conn_id="spark_default",
         jars="/opt/bitnami/spark/jars/postgresql.jar",
         conf=conf,
+    )
+
+    silver_activities_dq = PythonOperator(
+        task_id="silver_activities_dq",
+        python_callable=run_dq_checks,
+        op_kwargs={
+            "table_schema": "silver",
+            "table_name": "silver_activities"
+        },
     )
 
     # Denormalized table made by joining above tables
@@ -89,5 +118,7 @@ with DAG(
         conf=conf,
     )
 
-    # Dependencies
-    silver_time_dim >> [silver_users, silver_entries, silver_activities] >> silver_hisaab_denorm
+# Dependencies
+silver_time_dim >> silver_users >> silver_users_dq >> silver_hisaab_denorm
+silver_time_dim >> silver_entries >> silver_entries_dq >> silver_hisaab_denorm
+silver_time_dim >> silver_activities >> silver_activities_dq >> silver_hisaab_denorm

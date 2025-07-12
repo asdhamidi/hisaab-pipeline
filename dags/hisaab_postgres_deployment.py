@@ -61,6 +61,17 @@ with DAG(
     tags=["postgres"],
     catchup=False,
 ) as dag:
+    deploy_admin_schema = PostgresOperator.partial(
+        task_id="deploy_admin_schema",
+        postgres_conn_id="hisaab_postgres",
+        map_index_template="{{(task.sql[task.sql.find('EXISTS')+7:task.sql.find(';')])}}",
+    ).expand(sql=get_ddl_files("admin"))
+
+    deploy_admin_dml_schema = PostgresOperator.partial(
+        task_id="deploy_admin_dml_schema",
+        postgres_conn_id="hisaab_postgres",
+        map_index_template="{{(task.sql[task.sql.find('TRUNCATE TABLE')+14:task.sql.find(';')])}}",
+    ).expand(sql=get_ddl_files("admin_dml"))
 
     deploy_bronze_schema = PostgresOperator.partial(
         task_id="deploy_bronze_schema",
@@ -80,4 +91,4 @@ with DAG(
         map_index_template="{{(task.sql[task.sql.find('EXISTS')+7:task.sql.find(';')])}}",
     ).expand(sql=get_ddl_files("gold"))
 
-    deploy_bronze_schema >> deploy_silver_schema >> deploy_gold_schema
+deploy_admin_schema >> deploy_admin_dml_schema >> [deploy_bronze_schema, deploy_silver_schema, deploy_gold_schema]
